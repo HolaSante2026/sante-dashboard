@@ -388,6 +388,28 @@ async function loadData(){
   document.getElementById('sheetUrl').value=url;
   setStatus('loading','Cargando...');
   try{
+    var json=await loadJsonp(url,'callback');
+    var ventas=Array.isArray(json)?json:(json.ventas||[]);
+    allData=ventas.map(function(r){return{
+      fecha:r['Fecha']||'',nombre:r['Nombre_Paciente']||'',genero:r['Genero']||'',
+      edad:parseInt(r['Edad'])||0,es_nuevo:r['Es_Nuevo']||'',canal:r['Canal_Origen']||'',
+      servicio:r['Servicio']||'',monto:parseFloat(r['Monto'])||0,
+      metodo:r['Metodo_Pago']||'',notas:r['Notas']||''
+    };});
+    if(!Array.isArray(json)){
+      if(json.costos)window._costosSheet=json.costos;
+      if(json.gastos)window._gastosSheet=json.gastos;
+    }
+    destroyAll();renderAll();renderRentabilidad(allData,window._costosSheet||{},window._gastosSheet||[]);
+    document.getElementById('setupBox').style.display='none';
+    var now=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    setStatus('ok','Actualizado '+now+' · '+allData.length+' registros');
+  }catch(e){setStatus('err','Error: '+e.message);}
+}
+  var url=document.getElementById('sheetUrl').value.trim()||SCRIPT_URL;
+  document.getElementById('sheetUrl').value=url;
+  setStatus('loading','Cargando...');
+  try{
     var res=await fetch(url);
     var json=await res.json();
     if(!Array.isArray(json))throw new Error('Formato inesperado');
